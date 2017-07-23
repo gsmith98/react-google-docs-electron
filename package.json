@@ -28,8 +28,10 @@
     "webpack-dev-server": "^2.6.0"
   },
   "dependencies": {
+    "body-parser": "^1.17.2",
     "draft-js": "^0.10.1",
     "express": "^4.15.3",
+    "mongoose": "^4.11.3",
     "react": "^15.6.1",
     "react-dom": "^15.6.1"
   }

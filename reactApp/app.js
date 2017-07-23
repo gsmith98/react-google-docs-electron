@@ -1,7 +1,8 @@
 import React from 'react';
 import { render } from 'react-dom';
-import MyEditor from './components/MyEditor';
 
+import App from './components/App';
 
-render(<MyEditor/>,
+render(
+   <App/>,
    document.getElementById('root'));

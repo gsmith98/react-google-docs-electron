@@ -28,6 +28,7 @@
     "webpack-dev-server": "^2.6.0"
   },
   "dependencies": {
+    "draft-js": "^0.10.1",
     "express": "^4.15.3",
     "react": "^15.6.1",
     "react-dom": "^15.6.1"

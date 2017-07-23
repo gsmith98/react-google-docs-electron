@@ -1,6 +1,11 @@
 import React from 'react';
 
 class Register extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {error: null};
+  }
+
   register(username, password, repeat) {
     console.log(username, password, repeat);
 
@@ -15,7 +20,13 @@ class Register extends React.Component {
       })
     })
     .then(resp => resp.json())
-    .then(resp => console.log(resp))
+    .then(resp => {
+      if (resp.success) {
+        this.props.navigate('LOGIN');
+      } else {
+        this.setState({error: resp.error.errmsg})
+      }
+    })
     .catch(err => {throw err})
   }
 
@@ -26,6 +37,7 @@ class Register extends React.Component {
     return (
       <div>
         <h1>Register</h1>
+        <p>{this.state.error}</p>
         <input ref={node => {usernameField=node}} placeholder="username" type="text" />
         <input ref={node => {passwordField=node}} placeholder="password" type="password" />
         <input ref={node => {repeatPasswordField=node}} placeholder="password" type="password" />

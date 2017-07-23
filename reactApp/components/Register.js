@@ -7,8 +7,6 @@ class Register extends React.Component {
   }
 
   register(username, password, repeat) {
-    console.log(username, password, repeat);
-
     fetch('http://localhost:3000/register', {
       method: 'POST',
       credentials: 'include',
@@ -23,7 +21,7 @@ class Register extends React.Component {
     .then(resp => resp.json())
     .then(resp => {
       if (resp.success) {
-        this.props.navigate('LOGIN');
+        this.props.history.push('/');
       } else {
         this.setState({error: resp.error.errmsg})
       }
@@ -50,7 +48,7 @@ class Register extends React.Component {
         >
           Register
         </button>
-        <button onClick={() => this.props.navigate('LOGIN')}>Back to Login</button>
+        <button onClick={() => this.props.history.push('/')}>Back to Login</button>
       </div>
     )
   }

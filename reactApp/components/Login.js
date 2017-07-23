@@ -7,7 +7,6 @@ class Login extends React.Component {
   }
 
   login(username, password) {
-    console.log(username, password);
     fetch('http://localhost:3000/login', {
       method: 'POST',
       credentials: 'include',
@@ -24,7 +23,7 @@ class Login extends React.Component {
       if (result === 'Unauthorized') {
         this.setState({error: 'Incorrect Username or Password'});
       } else {
-        this.props.navigate('DOCPORTAL');
+        this.props.history.push('/docportal');
       }
     })
     .catch(err => {throw err})
@@ -40,7 +39,7 @@ class Login extends React.Component {
         <input ref={node => {usernameField=node}} placeholder="username" type="text" />
         <input ref={node => {passwordField=node}} placeholder="password" type="password" />
         <button onClick={() => this.login(usernameField.value, passwordField.value)}>Login</button>
-        <button onClick={() => this.props.navigate('REGISTER')}>Register</button>
+        <button onClick={() => this.props.history.push('/register')}>Register</button>
       </div>
     )
   }

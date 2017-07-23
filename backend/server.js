@@ -9,6 +9,7 @@ const User = require('./models').User
 
 const app = express();
 
+
 mongoose.connect(process.env.MONGODB_URI);
 mongoose.connection.on('connected', function(){
     console.log('successfully connected to database')
@@ -72,6 +73,7 @@ app.post('/register', (req, res) => {
 app.post('/login', passport.authenticate('local'), (req, res) => {
   res.json({success: true, user: req.user})
 });
+
 
 app.listen(3000, function () {
   console.log('Backend server for Electron App running on port 3000!')

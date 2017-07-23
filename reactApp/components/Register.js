@@ -11,6 +11,7 @@ class Register extends React.Component {
 
     fetch('http://localhost:3000/register', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json'
       },

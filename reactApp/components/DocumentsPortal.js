@@ -46,8 +46,34 @@ class DocumentsPortal extends React.Component {
     .catch(err => { throw err });
   }
 
+  addSharedDoc(docId) {
+    let docToAdd;
+    fetch(`http://localhost:3000/getdocument/${docId}`, {
+      credentials: 'include'
+    })
+    .then(resp => resp.json())
+    .then(resp => {
+      if (!resp.success) throw resp.error;
+
+      docToAdd = resp.document;
+
+      return fetch(`http://localhost:3000/addshareddoc/${docId}`, {
+        credentials: 'include'
+      });
+    })
+    .then(resp => resp.json())
+    .then(resp => {
+      if (!resp.success) throw resp.error;
+
+      this.setState({ userDocs: this.state.userDocs.concat(docToAdd), error: null });
+    })
+    .catch(err => { this.setState({error: err.errmsg}) });
+  }
+
+
   render() {
     let newDocTitleField;
+    let shareIdField;
     return (
       <div>
         <h1>Documents Portal</h1>
@@ -65,6 +91,16 @@ class DocumentsPortal extends React.Component {
           <div>
             {this.state.userDocs.map(doc => <div key={doc._id}><Link to={`/edit/${doc._id}`}>{doc.title}</Link></div>)}
           </div>
+        </div>
+        <div>
+          <input
+            ref={node => {shareIdField = node}}
+            placeholder="paste a doc id shared with you here"
+          />
+          <button onClick={() => {
+            this.addSharedDoc(shareIdField.value);
+            shareIdField.value = '';
+          }}>Add Shared Document</button>
         </div>
       </div>
     )

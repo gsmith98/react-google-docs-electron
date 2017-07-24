@@ -123,6 +123,16 @@ app.get('/getdocument/:docId', (req, res) => {
   })
 });
 
+app.get('/addshareddoc/:docId', (req, res) => {
+  User.update({_id: req.user.id}, { $push: { documents: req.params.docId }})
+  .then(() => {
+    res.json({ success: true });
+  })
+  .catch((err) => {
+    res.json({ success: false, error: err });
+  })
+});
+
 
 
 app.listen(3000, function () {

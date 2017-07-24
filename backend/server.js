@@ -1,4 +1,7 @@
 const express = require('express');
+const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const mongoose = require('mongoose');
@@ -7,8 +10,6 @@ const MongoStore = require('connect-mongo')(session);
 const LocalStrategy = require('passport-local').Strategy;
 const User = require('./models').User;
 const Doc = require('./models').Doc;
-
-const app = express();
 
 
 mongoose.connect(process.env.MONGODB_URI);
@@ -54,6 +55,21 @@ passport.deserializeUser(function(id, done) {
 app.use(passport.initialize());
 app.use(passport.session());
 /* END OF PASSPORT SETUP */
+
+
+/* SOCKET SETUP */
+io.on('connection', socket => {
+
+  socket.on('join', ({docId}) => {
+    socket.join(docId);
+    socket.room = docId;
+    socket.broadcast.to(docId).emit('userJoined');
+  })
+
+  socket.emit('connectionReady');
+});
+/* END OF SOCKET SETUP */
+
 
 /* AUTH ROUTES */
 app.post('/register', (req, res) => {
@@ -124,6 +140,7 @@ app.get('/getdocument/:docId', (req, res) => {
 });
 
 app.get('/addshareddoc/:docId', (req, res) => {
+  // To be fully correct, this route should also check that it isn't adding a duplicate
   User.update({_id: req.user.id}, { $push: { documents: req.params.docId }})
   .then(() => {
     res.json({ success: true });
@@ -134,7 +151,6 @@ app.get('/addshareddoc/:docId', (req, res) => {
 });
 
 
-
-app.listen(3000, function () {
-  console.log('Backend server for Electron App running on port 3000!')
+server.listen(3000, () => {
+    console.log('Backend server for Electron App running on port 3000!')
 });

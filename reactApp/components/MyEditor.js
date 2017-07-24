@@ -1,5 +1,6 @@
 import React from 'react';
 import { Editor, EditorState, convertToRaw, convertFromRaw } from 'draft-js';
+const io = require('socket.io-client');
 import Toolbar from './Toolbar';
 
 class MyEditor extends React.Component {
@@ -10,6 +11,14 @@ class MyEditor extends React.Component {
       title: 'Loading Document...',
       error: null
     };
+
+    this.socket = io('http://localhost:3000');
+    this.socket.on('connectionReady', () => {
+      this.socket.emit('join', {docId: this.props.match.params.dochash})
+    })
+    this.socket.on('userJoined', () => {
+      console.log('user joined');
+    })
   }
 
   onChange(editorState) {
@@ -46,6 +55,10 @@ class MyEditor extends React.Component {
       }
     })
     .catch(err => { throw err });
+  }
+
+  componentWillUnmount() {
+    this.socket.disconnect();
   }
 
   saveDocument() {

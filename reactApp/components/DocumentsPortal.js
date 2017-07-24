@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 class DocumentsPortal extends React.Component {
   constructor(props) {
@@ -11,7 +12,7 @@ class DocumentsPortal extends React.Component {
   }
 
   loadDocs() {
-    fetch('http://localhost:3000/getUserDocuments', {
+    fetch('http://localhost:3000/getuserdocuments', {
       credentials: 'include'
     })
     .then(resp => resp.json())
@@ -61,7 +62,9 @@ class DocumentsPortal extends React.Component {
         }}>Create Document</button>
         <div style={{outline: 'solid', padding: 10, margin: 10}}>
           <label>My Documents</label>
-          <ul>{this.state.userDocs.map(doc => <li key={doc._id}>{doc.title}</li>)}</ul>
+          <div>
+            {this.state.userDocs.map(doc => <div key={doc._id}><Link to={`/edit/${doc._id}`}>{doc.title}</Link></div>)}
+          </div>
         </div>
       </div>
     )

@@ -75,7 +75,7 @@ app.post('/login', passport.authenticate('local'), (req, res) => {
 /* END OF AUTH ROUTES */
 
 
-app.get('/getUserDocuments', (req, res) => {
+app.get('/getuserdocuments', (req, res) => {
   req.user.populate('documents')
   .execPopulate()
   .then(populatedUser => {
@@ -86,7 +86,7 @@ app.get('/getUserDocuments', (req, res) => {
   })
 });
 
-app.post('/newDocument', (req, res) => {
+app.post('/newdocument', (req, res) => {
   const newDoc = new Doc({ title: req.body.title, owner: req.user.id });
 
   let docToSendBack;
@@ -99,6 +99,26 @@ app.post('/newDocument', (req, res) => {
     res.json({ success: true, newDoc: docToSendBack });
   })
   .catch((err) => {
+    res.json({ success: false, error: err });
+  })
+});
+
+app.post('/savedocument/:docId', (req, res) => {
+  Doc.update({_id: req.params.docId}, {$set: {content: req.body.content}})
+  .then(() => {
+    res.json({ success: true });
+  })
+  .catch((err) => {
+    res.json({ success: false, error: err });
+  })
+});
+
+app.get('/getdocument/:docId', (req, res) => {
+  Doc.findById(req.params.docId)
+  .then(foundDoc => {
+    res.json({ success: true, document: foundDoc });
+  })
+  .catch(err => {
     res.json({ success: false, error: err });
   })
 });

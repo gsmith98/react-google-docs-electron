@@ -19,8 +19,7 @@ const userSchema = new Schema({
 
 const docSchema = new Schema({
     content: {
-        type: String,
-        default: ''
+        type: String
     },
     title: {
         type: String,

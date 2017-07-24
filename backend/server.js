@@ -4,8 +4,9 @@ const passport = require('passport');
 const mongoose = require('mongoose');
 const session = require('express-session')
 const MongoStore = require('connect-mongo')(session);
-const LocalStrategy = require('passport-local').Strategy
-const User = require('./models').User
+const LocalStrategy = require('passport-local').Strategy;
+const User = require('./models').User;
+const Doc = require('./models').Doc;
 
 const app = express();
 
@@ -54,9 +55,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 /* END OF PASSPORT SETUP */
 
-
-
-
+/* AUTH ROUTES */
 app.post('/register', (req, res) => {
   new User({
     username: req.body.username,
@@ -73,6 +72,37 @@ app.post('/register', (req, res) => {
 app.post('/login', passport.authenticate('local'), (req, res) => {
   res.json({success: true, user: req.user})
 });
+/* END OF AUTH ROUTES */
+
+
+app.get('/getUserDocuments', (req, res) => {
+  req.user.populate('documents')
+  .execPopulate()
+  .then(populatedUser => {
+    res.json({success: true, userDocs: populatedUser.documents});
+  })
+  .catch(err => {
+    res.json({success: false, error: err});
+  })
+});
+
+app.post('/newDocument', (req, res) => {
+  const newDoc = new Doc({ title: req.body.title, owner: req.user.id });
+
+  let docToSendBack;
+  newDoc.save()
+  .then((savedDoc) => {
+    docToSendBack = savedDoc;
+    return User.update({_id: req.user.id}, { $push: { documents: savedDoc.id }});
+  })
+  .then(() => {
+    res.json({ success: true, newDoc: docToSendBack });
+  })
+  .catch((err) => {
+    res.json({ success: false, error: err });
+  })
+});
+
 
 
 app.listen(3000, function () {

@@ -15,18 +15,26 @@ const userSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'Doc'
     }]
-})
+});
 
 const docSchema = new Schema({
     content: {
         type: String,
-        required: true
+        default: ''
     },
     title: {
         type: String,
         required: true
     },
-})
+    owner: {
+      type: Schema.ObjectId,
+      ref: 'User',
+      required: true
+    }
+});
+// Make the owner title combination unique
+docSchema.index({ owner: 1, title: 1}, { unique: true });
+
 module.exports = {
     User: mongoose.model('User', userSchema),
     Doc: mongoose.model('Doc', docSchema)

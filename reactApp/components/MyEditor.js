@@ -1,5 +1,5 @@
 import React from 'react';
-import { Editor, EditorState, convertToRaw, convertFromRaw } from 'draft-js';
+import { Editor, EditorState, convertToRaw, convertFromRaw, RichUtils } from 'draft-js';
 const io = require('socket.io-client');
 import Toolbar from './Toolbar';
 
@@ -12,24 +12,53 @@ class MyEditor extends React.Component {
       error: null
     };
 
+    this.previousHighlight = null;
+    this.highlightStyle = null;
+
     this.socket = io('http://localhost:3000');
     this.socket.on('connectionReady', () => {
       this.socket.emit('join', {docId: this.props.match.params.dochash})
     });
-    this.socket.on('userJoined', () => {
-      console.log('user joined');
+    this.socket.on('userJoined', color => {
+      console.log('user joined', color);
+    });
+    this.socket.on('newColor', color => {
+      console.log('color', color);
+      this.highlightStyle = color;
     });
     this.socket.on('contentUpdate', newContent => {
-      const raw = JSON.parse(newContent)
-      const contentState = convertFromRaw(raw)
+      const raw = JSON.parse(newContent);
+      const contentState = convertFromRaw(raw);
+
       this.setState({
           editorState: EditorState.createWithContent(contentState)
-      })
+      });
 
     });
   }
 
   onChange(editorState) {
+    const selection = editorState.getSelection();
+
+    // remove styling from previous highlight
+    if (this.previousHighlight) {
+      editorState = EditorState.acceptSelection(editorState, this.previousHighlight);
+      editorState = RichUtils.toggleInlineStyle(editorState, this.highlightStyle);
+      editorState = EditorState.acceptSelection(editorState, selection);
+
+      this.previousHighlight = null;
+    }
+
+    // if this is a highlight, style it
+    if (selection.getStartOffset() !== selection.getEndOffset()) {
+      editorState = RichUtils.toggleInlineStyle(editorState, this.highlightStyle);
+      this.previousHighlight = selection;
+    }
+
+
+
+
+
     this.setState({editorState});
 
     const content = editorState.getCurrentContent();
@@ -133,6 +162,18 @@ const styleMap = {
     textDecoration: 'line-through',
     color: 'red',
     float: 'right'
+  },
+  'HIGHLIGHT1': {
+    backgroundColor: 'red'
+  },
+  'HIGHLIGHT2': {
+    backgroundColor: 'yellow'
+  },
+  'HIGHLIGHT3': {
+    backgroundColor: 'green'
+  },
+  'HIGHLIGHT4': {
+    backgroundColor: 'blue'
   }
 }
 

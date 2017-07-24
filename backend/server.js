@@ -61,13 +61,34 @@ app.use(passport.session());
 io.on('connection', socket => {
 
   socket.on('join', ({docId}) => {
+    const rooms = io.sockets.adapter.rooms;
+    if (rooms[docId] && rooms[docId].length === 4) {
+      socket.emit('roomFull');
+      return;
+    }
+
     socket.room = docId;
     socket.join(socket.room);
-    socket.broadcast.to(socket.room).emit('userJoined');
+
+    if (rooms[socket.room].length === 1) {
+      rooms[socket.room].colors = ['HIGHLIGHT4', 'HIGHLIGHT3', 'HIGHLIGHT2', 'HIGHLIGHT1'];
+    }
+    socket.color = rooms[socket.room].colors.pop();
+
+    socket.broadcast.to(socket.room).emit('userJoined', socket.color);
+    socket.emit('newColor', socket.color)
   });
 
   socket.on('contentUpdate', newContent => {
     socket.broadcast.to(socket.room).emit('contentUpdate', newContent);
+  });
+
+  socket.on('disconnect', () => {
+    const theRoom = io.sockets.adapter.rooms[socket.room];
+    if (theRoom) {
+      theRoom.colors.push(socket.color);
+    }
+    socket.leave(socket.room);
   })
 
   socket.emit('connectionReady');

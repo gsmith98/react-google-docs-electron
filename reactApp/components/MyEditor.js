@@ -15,14 +15,27 @@ class MyEditor extends React.Component {
     this.socket = io('http://localhost:3000');
     this.socket.on('connectionReady', () => {
       this.socket.emit('join', {docId: this.props.match.params.dochash})
-    })
+    });
     this.socket.on('userJoined', () => {
       console.log('user joined');
-    })
+    });
+    this.socket.on('contentUpdate', newContent => {
+      const raw = JSON.parse(newContent)
+      const contentState = convertFromRaw(raw)
+      this.setState({
+          editorState: EditorState.createWithContent(contentState)
+      })
+
+    });
   }
 
   onChange(editorState) {
     this.setState({editorState});
+
+    const content = editorState.getCurrentContent();
+    const raw = convertToRaw(content);
+    const jsonRaw = JSON.stringify(raw);
+    this.socket.emit('contentUpdate', jsonRaw);
   }
 
   componentDidMount() {

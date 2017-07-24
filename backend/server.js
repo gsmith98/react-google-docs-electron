@@ -61,9 +61,13 @@ app.use(passport.session());
 io.on('connection', socket => {
 
   socket.on('join', ({docId}) => {
-    socket.join(docId);
     socket.room = docId;
-    socket.broadcast.to(docId).emit('userJoined');
+    socket.join(socket.room);
+    socket.broadcast.to(socket.room).emit('userJoined');
+  });
+
+  socket.on('contentUpdate', newContent => {
+    socket.broadcast.to(socket.room).emit('contentUpdate', newContent);
   })
 
   socket.emit('connectionReady');

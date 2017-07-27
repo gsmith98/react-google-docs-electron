@@ -8,7 +8,8 @@ const MongoStore = require('connect-mongo')(session);
 const LocalStrategy = require('passport-local').Strategy;
 const User = require('./models').User;
 const Doc = require('./models').Doc;
-
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
 
 mongoose.connect(process.env.MONGODB_URI);
 mongoose.connection.on('connected', function(){
@@ -54,6 +55,37 @@ app.use(passport.initialize());
 app.use(passport.session());
 /* END OF PASSPORT SETUP */
 
+
+io.on('connection', socket => {
+
+  socket.on('join', ({doc}) => {
+    console.log('join', doc);
+    socket.emit('helloBack', { doc });
+
+    socket.join(doc)
+    socket.theOneRoom = doc;
+
+    socket.broadcast.to(doc).emit('userJoined');
+    //io.sockets.emit('userJoined');
+  });
+
+  socket.on('newContent', stringifiedContent => {
+    socket.broadcast.to(socket.theOneRoom).emit('receiveNewContent', stringifiedContent);
+  });
+
+  socket.on('cursorMove', selection => {
+    console.log('selection', selection);
+      socket.broadcast.to(socket.theOneRoom).emit('receiveNewCursor', selection);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('socket disconnected');
+    socket.leave(socket.theOneRoom);
+    socket.broadcast.to(socket.theOneRoom).emit('userLeft');
+
+  })
+
+});
 
 
 /* AUTH ROUTES */
@@ -136,6 +168,6 @@ app.get('/addshareddoc/:docId', (req, res) => {
 });
 
 
-app.listen(3000, () => {
+server.listen(3000, () => {
     console.log('Backend server for Electron App running on port 3000!')
 });

@@ -1,7 +1,5 @@
 const express = require('express');
 const app = express();
-const server = require('http').createServer(app);
-const io = require('socket.io')(server);
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const mongoose = require('mongoose');
@@ -56,51 +54,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 /* END OF PASSPORT SETUP */
 
-
-/* SOCKET SETUP */
-io.on('connection', socket => {
-
-  socket.on('join', ({docId}) => {
-    const rooms = io.sockets.adapter.rooms;
-    if (rooms[docId] && rooms[docId].length === 4) {
-      socket.emit('roomFull');
-      return;
-    }
-
-    socket.room = docId;
-    socket.join(socket.room);
-
-    if (rooms[socket.room].length === 1) {
-      rooms[socket.room].availableColors = ['purple', 'green', 'yellow', 'red'];
-      rooms[socket.room].inRoom = [];
-    }
-    socket.color = rooms[socket.room].availableColors.pop();
-
-    socket.broadcast.to(socket.room).emit('userJoined', socket.color);
-    socket.emit('joinSuccess', {color: socket.color, inRoom: rooms[socket.room].inRoom});
-    rooms[socket.room].inRoom.push(socket.color);
-  });
-
-  socket.on('contentUpdate', newContent => {
-    socket.broadcast.to(socket.room).emit('contentUpdate', newContent);
-  });
-
-  socket.on('cursor', selection => {
-    console.log("SELECTION", selection);
-    socket.broadcast.to(socket.room).emit('newCursor', {incomingSelectionObj: selection, color: socket.color});
-  })
-
-  socket.on('disconnect', () => {
-    const theRoom = io.sockets.adapter.rooms[socket.room];
-    if (theRoom) {
-      theRoom.colors.push(socket.color);
-    }
-    socket.leave(socket.room);
-  })
-
-  socket.emit('connectionReady');
-});
-/* END OF SOCKET SETUP */
 
 
 /* AUTH ROUTES */
@@ -183,6 +136,6 @@ app.get('/addshareddoc/:docId', (req, res) => {
 });
 
 
-server.listen(3000, () => {
+app.listen(3000, () => {
     console.log('Backend server for Electron App running on port 3000!')
 });

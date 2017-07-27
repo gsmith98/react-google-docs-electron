@@ -9,11 +9,12 @@ class MyEditor extends React.Component {
     this.state = {
       editorState: EditorState.createEmpty(),
       title: 'Loading Document...',
-      error: null
+      error: null,
+      cursors: {}
     };
 
     this.previousHighlight = null;
-    this.highlightStyle = null;
+    this.color = null;
 
     this.socket = io('http://localhost:3000');
     this.socket.on('connectionReady', () => {
@@ -21,10 +22,14 @@ class MyEditor extends React.Component {
     });
     this.socket.on('userJoined', color => {
       console.log('user joined', color);
+      styleMap[color] = {backgroundColor: color};
+      this.setState({cursors: Object.assign({}, this.state.cursors, {[color]: null})});
     });
-    this.socket.on('newColor', color => {
+    this.socket.on('joinSuccess', ({color, inRoom}) => {
       console.log('color', color);
-      this.highlightStyle = color;
+      styleMap[color] = {backgroundColor: color};
+      inRoom.forEach(c => styleMap[c] = {backgroundColor: c});
+      this.color = color;
     });
     this.socket.on('contentUpdate', newContent => {
       const raw = JSON.parse(newContent);
@@ -33,7 +38,28 @@ class MyEditor extends React.Component {
       this.setState({
           editorState: EditorState.createWithContent(contentState)
       });
+    });
 
+    this.socket.on('newCursor', ({incomingSelectionObj, color}) => {
+      if (!incomingSelectionObj) {
+        return this.setState({cursors: Object.assign({}, this.state.cursors, {[color]: null})})
+      }
+
+      const ogEditorState = this.state.editorState;
+
+      const incomingSelectionState = ogEditorState.getSelection().merge(incomingSelectionObj)
+
+      const temporaryEditorState = EditorState.forceSelection(ogEditorState, incomingSelectionState);
+
+      this.setState({editorState: temporaryEditorState}, () => {
+        const winSel = window.getSelection();
+        const range = winSel.getRangeAt(0);
+        const { top, left, bottom } = range.getClientRects()[0];
+        this.setState({
+          editorState: ogEditorState,
+          cursors: Object.assign({}, this.state.cursors, {[color]: {top, left, height: bottom-top}})
+        });
+      });
     });
   }
 
@@ -43,21 +69,19 @@ class MyEditor extends React.Component {
     // remove styling from previous highlight
     if (this.previousHighlight) {
       editorState = EditorState.acceptSelection(editorState, this.previousHighlight);
-      editorState = RichUtils.toggleInlineStyle(editorState, this.highlightStyle);
+      editorState = RichUtils.toggleInlineStyle(editorState, this.color);
       editorState = EditorState.acceptSelection(editorState, selection);
 
       this.previousHighlight = null;
     }
 
-    // if this is a highlight, style it
     if (selection.getStartOffset() !== selection.getEndOffset()) {
-      editorState = RichUtils.toggleInlineStyle(editorState, this.highlightStyle);
+      editorState = RichUtils.toggleInlineStyle(editorState, this.color);
       this.previousHighlight = selection;
+      this.socket.emit('cursor', null);
+    } else {
+      this.socket.emit('cursor', selection)
     }
-
-
-
-
 
     this.setState({editorState});
 
@@ -131,6 +155,19 @@ class MyEditor extends React.Component {
   render() {
     return (
       <div>
+        {Object.keys(this.state.cursors).map(color => {
+          const cursor = this.state.cursors[color];
+          return cursor ? (
+            <div key={color} style={{
+              backgroundColor: color,
+              width: '2px',
+              height: this.state.cursors[color].height,
+              position: 'absolute',
+              top: this.state.cursors[color].top,
+              left: this.state.cursors[color].left
+            }}></div>
+          ) : null;
+        })}
         <button onClick={() => this.props.history.push('/docportal')}>{'<'} Back to Documents Portal</button>
         <h1>{this.state.title}</h1>
         <div style={{margin: 10}}>
@@ -162,18 +199,6 @@ const styleMap = {
     textDecoration: 'line-through',
     color: 'red',
     float: 'right'
-  },
-  'HIGHLIGHT1': {
-    backgroundColor: 'red'
-  },
-  'HIGHLIGHT2': {
-    backgroundColor: 'yellow'
-  },
-  'HIGHLIGHT3': {
-    backgroundColor: 'green'
-  },
-  'HIGHLIGHT4': {
-    backgroundColor: 'blue'
   }
 }
 

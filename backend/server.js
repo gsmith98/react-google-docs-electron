@@ -71,17 +71,24 @@ io.on('connection', socket => {
     socket.join(socket.room);
 
     if (rooms[socket.room].length === 1) {
-      rooms[socket.room].colors = ['HIGHLIGHT4', 'HIGHLIGHT3', 'HIGHLIGHT2', 'HIGHLIGHT1'];
+      rooms[socket.room].availableColors = ['purple', 'green', 'yellow', 'red'];
+      rooms[socket.room].inRoom = [];
     }
-    socket.color = rooms[socket.room].colors.pop();
+    socket.color = rooms[socket.room].availableColors.pop();
 
     socket.broadcast.to(socket.room).emit('userJoined', socket.color);
-    socket.emit('newColor', socket.color)
+    socket.emit('joinSuccess', {color: socket.color, inRoom: rooms[socket.room].inRoom});
+    rooms[socket.room].inRoom.push(socket.color);
   });
 
   socket.on('contentUpdate', newContent => {
     socket.broadcast.to(socket.room).emit('contentUpdate', newContent);
   });
+
+  socket.on('cursor', selection => {
+    console.log("SELECTION", selection);
+    socket.broadcast.to(socket.room).emit('newCursor', {incomingSelectionObj: selection, color: socket.color});
+  })
 
   socket.on('disconnect', () => {
     const theRoom = io.sockets.adapter.rooms[socket.room];

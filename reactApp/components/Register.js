@@ -38,8 +38,11 @@ class Register extends React.Component {
         <h1>Register</h1>
         <p>{this.state.error}</p>
         <input ref={node => {usernameField=node}} placeholder="username" type="text" />
+        <br />
         <input ref={node => {passwordField=node}} placeholder="password" type="password" />
+        <br />
         <input ref={node => {repeatPasswordField=node}} placeholder="password" type="password" />
+        <br />
         <button
           onClick={() => this.register(
             usernameField.value,
@@ -48,6 +51,7 @@ class Register extends React.Component {
         >
           Register
         </button>
+        <br />
         <button onClick={() => this.props.history.push('/')}>Back to Login</button>
       </div>
     )

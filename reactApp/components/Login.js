@@ -37,8 +37,11 @@ class Login extends React.Component {
         <h1>Login</h1>
         <p>{this.state.error}</p>
         <input ref={node => {usernameField=node}} placeholder="username" type="text" />
+        <br />
         <input ref={node => {passwordField=node}} placeholder="password" type="password" />
+        <br />
         <button onClick={() => this.login(usernameField.value, passwordField.value)}>Login</button>
+        <br />
         <button onClick={() => this.props.history.push('/register')}>Register</button>
       </div>
     )

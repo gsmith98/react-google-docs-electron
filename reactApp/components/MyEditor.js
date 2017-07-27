@@ -64,14 +64,17 @@ class MyEditor extends React.Component {
       editorState = EditorState.acceptSelection(editorState, this.previousHighlight);
       editorState = RichUtils.toggleInlineStyle(editorState, 'RED');
       editorState = EditorState.acceptSelection(editorState, selection);
+      this.previousHighlight = null;
     }
 
-    editorState = RichUtils.toggleInlineStyle(editorState, 'RED');
-    this.previousHighlight = editorState.getSelection();
 
     if (selection.getStartOffset() === selection.getEndOffset()) {
       console.log('selection', selection);
       this.socket.emit('cursorMove', selection);
+    } else {
+      editorState = RichUtils.toggleInlineStyle(editorState, 'RED');
+      this.previousHighlight = editorState.getSelection();
+
     }
 
     const contentState = editorState.getCurrentContent();
